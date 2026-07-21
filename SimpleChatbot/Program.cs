@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using RagPipeline.Data;
+using RagPipeline.Interfaces;
+using RagPipeline.Services;
 using SimpleChatbot.Infrastructure;
 using SimpleChatbot.Interfaces;
 using SimpleChatbot.Services;
@@ -19,6 +21,13 @@ try
 
     var connectionString = builder.Configuration["ConnectionStrings:ChatDb"] ?? throw new InvalidOperationException("ConnectionStrings:ChatDb not found in user secrets.");
 
+    var ghPat = config["GH_PAT"]
+    ?? throw new InvalidOperationException("GH_PAT not found in user secrets.");
+
+    var ghEndpoint = builder.Configuration["GitHubModels:Endpoint"] ?? throw new InvalidOperationException("GitHubModels:Endpoint not found in appsettings.json.");
+    var ghEmbeddingModel = builder.Configuration["GitHubModels:EmbeddingModel"] ?? throw new InvalidOperationException("GitHubModels:EmbeddingModel not found in appsettings.json.");
+    var ghChatModel = builder.Configuration["GitHubModels:ChatModel"] ?? throw new InvalidOperationException("GitHubModels:ChatModel not found in appsettings.json.");
+
     builder.Services.AddDbContext<ChatDBContext>(options =>
         options.UseSqlServer(connectionString));
 
@@ -33,22 +42,51 @@ try
     //        new AuthenticationHeaderValue("Bearer", builder.Configuration["OpenAI:ApiKey"]);
     //});
 
+    builder.Services.AddDbContext<RagDbContext>(opt => opt.UseSqlServer(connectionString));
+    builder.Services.AddScoped<ISourceDocumentRepository, SourceDocumentRepository>();
+    builder.Services.AddScoped<IDocumentChunksRepository, DocumentChunksRepository>();
+    builder.Services.AddSingleton(new EmbeddingService(ghPat, ghEmbeddingModel, ghEndpoint));
+    builder.Services.AddScoped<PdfExtractionService>();
+    builder.Services.AddScoped<ChunkingService>();
+    builder.Services.AddScoped<IngestionService>();
+    builder.Services.AddScoped<VectorSearchService>();
+    builder.Services.AddScoped(sp => new RagAnswerService(
+        sp.GetRequiredService<EmbeddingService>(),
+        sp.GetRequiredService<VectorSearchService>(),
+        ghPat,
+        ghChatModel,
+        ghEndpoint));
 
-    var ghPat = config["GH_PAT"]
-    ?? throw new InvalidOperationException("GH_PAT not found in user secrets.");
+
+
 
     builder.Services.AddHttpClient<IEmbeddingService, GitHubModelsEmbeddingService>(client =>
     {
-        client.BaseAddress = new Uri("https://models.inference.ai.azure.com/");
+        client.BaseAddress = new Uri(ghEndpoint);
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", ghPat);
     });
 
+    builder.Services.AddScoped<IEmbeddingService>(sp =>
+    {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient(nameof(GitHubModelsEmbeddingService));
+        return new GitHubModelsEmbeddingService(httpClient, ghEmbeddingModel);
+    });
+
     builder.Services.AddHttpClient<IChatCompletionService, OpenAiChatCompletionService>(client =>
     {
-        client.BaseAddress = new Uri("https://models.inference.ai.azure.com/");
+        client.BaseAddress = new Uri(ghEndpoint);
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", ghPat);
+    });
+
+
+    builder.Services.AddScoped<IChatCompletionService>(sp =>
+    {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient(nameof(OpenAiChatCompletionService));
+        return new OpenAiChatCompletionService(httpClient, ghChatModel);
     });
 
     var JwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not found in user secrets.");

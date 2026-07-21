@@ -37,15 +37,19 @@ namespace SimpleChatbot.Services
     public class GitHubModelsEmbeddingService : IEmbeddingService
     {
         private readonly HttpClient _httpClient;
-        private const string Model = "text-embedding-3-small"; // 1536 dims
+        private string _model = "";
 
-        public GitHubModelsEmbeddingService(HttpClient httpClient) => _httpClient = httpClient;
+        public GitHubModelsEmbeddingService(HttpClient httpClient, string model)
+        {
+            _httpClient = httpClient;
+            _model = model;
+        }
 
         public async Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken ct)
         {
             var response = await _httpClient.PostAsJsonAsync("embeddings", new
             {
-                model = Model,
+                model = _model,
                 input = text
             }, ct);
 

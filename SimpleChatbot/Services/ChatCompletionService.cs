@@ -13,9 +13,13 @@ namespace SimpleChatbot.Services
     public class OpenAiChatCompletionService : IChatCompletionService
     {
         private readonly HttpClient _httpClient;
-        private const string Model = "gpt-4o";
+        private string _model = "";
 
-        public OpenAiChatCompletionService(HttpClient httpClient) => _httpClient = httpClient;
+        public OpenAiChatCompletionService(HttpClient httpClient, string chatModel)
+        {
+            _httpClient = httpClient;
+            _model = chatModel;
+        }
 
         public async Task<string> GetReplyAsync(List<Message> history, string newUserMessage, CancellationToken ct)
         {
@@ -27,7 +31,7 @@ namespace SimpleChatbot.Services
 
             var response = await _httpClient.PostAsJsonAsync("chat/completions", new
             {
-                model = Model,
+                model = _model,
                 messages
             }, ct);
 
