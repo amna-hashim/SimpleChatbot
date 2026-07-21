@@ -12,6 +12,7 @@ namespace SimpleChatbot.Services
     {
         Task<ConversationDto> AddConversationAsync(string userId, CreateConversationDto request, CancellationToken ct);
         Task<MessageDto> AddMessageAsync(string userId, CreateMessageDto request, CancellationToken ct);
+        Task<MessageDto> AddMessageWithPastContextAsync(string userId, CreateMessageDto request, CancellationToken ct);
         Task<List<MemoryResultDto>> SearchMemoryAsync(string userId, string queryText, int topK, CancellationToken ct);
     }
 
@@ -51,6 +52,33 @@ namespace SimpleChatbot.Services
         }
 
         public async Task<MessageDto> AddMessageAsync(string userId, CreateMessageDto request, CancellationToken ct)
+        {
+            var conversation = await _conversationRepo.GetByIdAsync(request.ConversationId, ct)
+                ?? throw new InvalidOperationException("Conversation not found.");
+
+            if (conversation.UserId != userId)
+                throw new UnauthorizedAccessException();
+
+            //1. Save user message
+            var embedding = await _embeddingService.GenerateEmbeddingAsync(request.Content, ct);
+
+            var message = new Message
+            {
+                MessageId = Guid.NewGuid(),
+                ConversationId = request.ConversationId,
+                UserId = userId,
+                Role = request.Role,
+                Content = request.Content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _messageRepo.AddWithEmbeddingAsync(message, embedding, ct);
+
+
+            return new MessageDto(message.MessageId, message.ConversationId, message.Role, message.Content, message.CreatedAt);
+        }
+
+        public async Task<MessageDto> AddMessageWithPastContextAsync(string userId, CreateMessageDto request, CancellationToken ct)
         {
             var conversation = await _conversationRepo.GetByIdAsync(request.ConversationId, ct)
                 ?? throw new InvalidOperationException("Conversation not found.");

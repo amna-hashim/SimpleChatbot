@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RagPipeline.Data;
-using RagPipeline.Interfaces;
-using RagPipeline.Services;
+using RagPipeline;
 using SimpleChatbot.Infrastructure;
 using SimpleChatbot.Interfaces;
 using SimpleChatbot.Services;
@@ -42,31 +40,15 @@ try
     //        new AuthenticationHeaderValue("Bearer", builder.Configuration["OpenAI:ApiKey"]);
     //});
 
-    builder.Services.AddDbContext<RagDbContext>(opt => opt.UseSqlServer(connectionString));
-    builder.Services.AddScoped<ISourceDocumentRepository, SourceDocumentRepository>();
-    builder.Services.AddScoped<IDocumentChunksRepository, DocumentChunksRepository>();
-    builder.Services.AddSingleton(new EmbeddingService(ghPat, ghEmbeddingModel, ghEndpoint));
-    builder.Services.AddScoped<PdfExtractionService>();
-    builder.Services.AddScoped<ChunkingService>();
-    builder.Services.AddScoped<IngestionService>();
-    builder.Services.AddScoped<VectorSearchService>();
-    builder.Services.AddScoped(sp => new RagAnswerService(
-        sp.GetRequiredService<EmbeddingService>(),
-        sp.GetRequiredService<VectorSearchService>(),
-        ghPat,
-        ghChatModel,
-        ghEndpoint));
-
-
-
-
-    builder.Services.AddHttpClient<IEmbeddingService, GitHubModelsEmbeddingService>(client =>
+    // Register a named client matching the factory CreateClient() name
+    builder.Services.AddHttpClient(nameof(GitHubModelsEmbeddingService), client =>
     {
         client.BaseAddress = new Uri(ghEndpoint);
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", ghPat);
     });
 
+    // Factory that creates the service with the named client and model string
     builder.Services.AddScoped<IEmbeddingService>(sp =>
     {
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
@@ -74,7 +56,7 @@ try
         return new GitHubModelsEmbeddingService(httpClient, ghEmbeddingModel);
     });
 
-    builder.Services.AddHttpClient<IChatCompletionService, OpenAiChatCompletionService>(client =>
+    builder.Services.AddHttpClient(nameof(OpenAiChatCompletionService), client =>
     {
         client.BaseAddress = new Uri(ghEndpoint);
         client.DefaultRequestHeaders.Authorization =
@@ -106,6 +88,8 @@ try
                     Encoding.UTF8.GetBytes(JwtKey))
             };
         });
+
+    builder.Services.AddRagPipeline(builder.Configuration);
 
     builder.Services.AddAuthorization();
 

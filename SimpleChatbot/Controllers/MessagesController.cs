@@ -31,7 +31,7 @@ namespace SimpleChatbot.Controllers
 
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userId = "testUser123";
-            var result = await _chatService.AddMessageAsync(userId, request, ct);
+            var result = await _chatService.AddMessageWithPastContextAsync(userId, request, ct);
             return Ok(result);
         }
 

@@ -72,7 +72,7 @@ public class IngestionIntegrationTests : IAsyncLifetime
         var ghToken = userSecretsConfig["GH_PAT"]
         ?? throw new InvalidOperationException("GH_PAT not found in user secrets.");
 
-        const string samplePdf = "C:/Users/Shoukri-EVO2/Downloads/sample_newsletter.pdf";
+        const string samplePdf = "sample_newsletter.pdf";
 
         if (string.IsNullOrWhiteSpace(connStr) || string.IsNullOrWhiteSpace(ghToken) || !File.Exists(samplePdf))
         {
