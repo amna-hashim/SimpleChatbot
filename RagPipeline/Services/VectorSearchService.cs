@@ -31,8 +31,8 @@ public class VectorSearchService
                 c.PageNumber,
                 c.Content,
                 VECTOR_DISTANCE('cosine', c.Embedding, CAST(@query AS VECTOR(1536))) AS Distance
-            FROM DocumentChunks c
-            INNER JOIN SourceDocuments d ON d.Id = c.SourceDocumentId
+            FROM RagDocumentChunks c
+            INNER JOIN RagSourceDocuments d ON d.Id = c.SourceDocumentId
             ORDER BY Distance ASC
             """;
 

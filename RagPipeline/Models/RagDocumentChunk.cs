@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RagPipeline.Models;
 
-public class SourceDocument
+public class RagSourceDocument
 {
     public int Id { get; set; }
     public string FileName { get; set; } = default!;
@@ -10,7 +10,7 @@ public class SourceDocument
     public DateTime IngestedAtUtc { get; set; } = DateTime.UtcNow;
     public int PageCount { get; set; }
 
-    public List<DocumentChunk> Chunks { get; set; } = new();
+    public List<RagDocumentChunk> Chunks { get; set; } = new();
 }
 
 public enum ChunkType
@@ -19,12 +19,12 @@ public enum ChunkType
     Table = 1
 }
 
-public class DocumentChunk
+public class RagDocumentChunk
 {
     public int Id { get; set; }
 
     public int SourceDocumentId { get; set; }
-    public SourceDocument SourceDocument { get; set; } = default!;
+    public RagSourceDocument SourceDocument { get; set; } = default!;
 
     public int ChunkIndex { get; set; }
     public int PageNumber { get; set; }

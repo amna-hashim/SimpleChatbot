@@ -12,7 +12,7 @@ public class DocumentChunksRepository : IDocumentChunksRepository
     private readonly RagDbContext _db;
     public DocumentChunksRepository(RagDbContext db) => _db = db;
 
-    public async Task AddWithEmbeddingAsync(DocumentChunk chunk, float[] embedding, CancellationToken ct)
+    public async Task AddWithEmbeddingAsync(RagDocumentChunk chunk, float[] embedding, CancellationToken ct)
     {
         var vectorJson = JsonSerializer.Serialize(embedding);
         var conn = (SqlConnection)_db.Database.GetDbConnection();
@@ -20,7 +20,7 @@ public class DocumentChunksRepository : IDocumentChunksRepository
         if (conn.State != ConnectionState.Open) await conn.OpenAsync(ct);
 
         await using var cmd = new SqlCommand(@"
-            INSERT INTO DocumentChunks
+            INSERT INTO RagDocumentChunks
                 (SourceDocumentId, ChunkIndex, PageNumber, Type, Content, Embedding, TokenCount)
             OUTPUT INSERTED.Id
             VALUES
@@ -38,7 +38,7 @@ public class DocumentChunksRepository : IDocumentChunksRepository
         chunk.Id = (int)await cmd.ExecuteScalarAsync(ct);
     }
 
-    public Task<List<DocumentChunk>> GetBySourceDocumentIdAsync(int sourceDocumentId, CancellationToken ct) =>
+    public Task<List<RagDocumentChunk>> GetBySourceDocumentIdAsync(int sourceDocumentId, CancellationToken ct) =>
         _db.DocumentChunks
             .Where(c => c.SourceDocumentId == sourceDocumentId)
             .OrderBy(c => c.ChunkIndex)

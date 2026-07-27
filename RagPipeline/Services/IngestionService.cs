@@ -25,12 +25,12 @@ public class IngestionService
         _documentChunks = documentChunks;
     }
 
-    public async Task<SourceDocument> IngestAsync(string pdfPath, CancellationToken ct = default)
+    public async Task<RagSourceDocument> IngestAsync(string pdfPath, CancellationToken ct = default)
     {
         var (pageCount, blocks) = _extractor.Extract(pdfPath);
         var pending = _chunker.Chunk(blocks);
 
-        var sourceDoc = new SourceDocument
+        var sourceDoc = new RagSourceDocument
         {
             FileName = Path.GetFileName(pdfPath),
             Title = Path.GetFileNameWithoutExtension(pdfPath),
@@ -49,7 +49,7 @@ public class IngestionService
 
             for (int j = 0; j < batch.Count; j++)
             {
-                var chunk = new DocumentChunk
+                var chunk = new RagDocumentChunk
                 {
                     SourceDocumentId = sourceDoc.Id,
                     ChunkIndex = chunkIndex++,

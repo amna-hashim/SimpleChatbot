@@ -10,19 +10,20 @@ public class RagDbContext : DbContext
 
     public RagDbContext(DbContextOptions<RagDbContext> options) : base(options) { }
 
-    public DbSet<SourceDocument> SourceDocuments => Set<SourceDocument>();
-    public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
+    public DbSet<RagSourceDocument> SourceDocuments => Set<RagSourceDocument>();
+    public DbSet<RagDocumentChunk> DocumentChunks => Set<RagDocumentChunk>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<SourceDocument>(e =>
+
+        modelBuilder.Entity<RagSourceDocument>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.FileName).HasMaxLength(400).IsRequired();
             e.Property(x => x.Title).HasMaxLength(400);
         });
 
-        modelBuilder.Entity<DocumentChunk>(e =>
+        modelBuilder.Entity<RagDocumentChunk>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Content).HasColumnType("nvarchar(max)").IsRequired();

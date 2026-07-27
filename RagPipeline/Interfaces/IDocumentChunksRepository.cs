@@ -4,6 +4,6 @@ namespace RagPipeline.Interfaces;
 
 public interface IDocumentChunksRepository
 {
-    Task AddWithEmbeddingAsync(DocumentChunk chunk, float[] embedding, CancellationToken ct);
-    Task<List<DocumentChunk>> GetBySourceDocumentIdAsync(int sourceDocumentId, CancellationToken ct);
+    Task AddWithEmbeddingAsync(RagDocumentChunk chunk, float[] embedding, CancellationToken ct);
+    Task<List<RagDocumentChunk>> GetBySourceDocumentIdAsync(int sourceDocumentId, CancellationToken ct);
 }
