@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RagPipeline;
 using SimpleChatbot.Infrastructure;
 using SimpleChatbot.Interfaces;
 using SimpleChatbot.Services;
@@ -88,8 +87,6 @@ try
                     Encoding.UTF8.GetBytes(JwtKey))
             };
         });
-
-    builder.Services.AddRagPipeline(builder.Configuration);
 
     builder.Services.AddAuthorization();
 

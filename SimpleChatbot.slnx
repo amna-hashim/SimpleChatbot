@@ -1,5 +1,3 @@
 <Solution>
-  <Project Path="RagPipeline.Tests/RagPipeline.Tests.csproj" Id="517494d1-8da7-4c68-b1b5-f250b32cdacd" />
-  <Project Path="RagPipeline/RagPipeline.csproj" />
   <Project Path="SimpleChatbot/SimpleChatbot.csproj" />
 </Solution>
